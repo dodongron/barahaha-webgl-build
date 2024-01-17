@@ -3,9 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Unity WebGL Player | Barahaha</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
+    <script src="./jquery-3.4.1.min.js"></script>
+    <script src="./bootstrap.bundle.min.js"></script>
+    <script src="./AgoraRTC_N.js"></script>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
@@ -23,6 +27,53 @@
         <div id="unity-build-title">Barahaha</div>
       </div>
     </div>
+    <form id="join-form">
+        <div id="myDiv" class="hidden">
+        <div class="btn-tab">
+            <button id="toggleButton" type="submit" class="tab-btn"><img src="TemplateData/icon_expand.png" width="30px" height="30px"></button>
+            <button id="chat" type="submit" class="tab-btn"><img src="TemplateData/icon_chat.png" width="30px" height="30px"></button>
+            <button id="join" type="submit" class="tab-btn"><img src="TemplateData/icon_video_chat.png" width="30px" height="30px"></button>
+            <button id="leave" type="submit" class="tab-btn" hidden disabled>Leave</button>
+            <button id="param" type="submit" class="tab-btn">Get</button>    
+        </div>
+        <!-- <p id="local-player-name" class="player-name"></p> -->
+        <div id="local-player" class="player" hidden></div>
+        <div class="row join-info-group" >
+        <div class="col-sm sso-hidden">
+            <p class="join-info-text" hidden>APP ID</p>
+            <input id="appid" type="text" value="6939706dbaee409bb0c5e8b0698fc483" hidden>
+        </div>
+        <div class="col-sm">
+            <p class="join-info-text" hidden>Room</p>
+            <input id="roomName" type="text" hidden>
+        </div>
+        <div class="col-sm">
+            <p class="join-info-text" hidden>Channel Name</p>
+            <input id="channel" type="text" value="Channel1" hidden>
+        </div>
+        <div class="col-sm">
+            <p class="join-info-text" hidden>Player</p>
+            <input id="playerName" type="text" hidden value="Player Name">
+        </div>
+        </div>
+        <br/>
+        </div>
+    </form>
+    <!-- <div id="video-container" >
+      <div class="row video-group">
+          <div class="col">
+
+            <div class="buttons-container">
+
+            </div>
+          </div>
+          <div class="w-100"></div>
+          <div class="col">
+              <div id="remote-playerlist"></div>
+          </div>
+      </div>
+    </div> -->
+
     <script>
 
       var container = document.querySelector("#unity-container");
@@ -118,5 +169,6 @@
       document.body.appendChild(script);
 
     </script>
+    <script src="./index.js"></script> 
   </body>
 </html>
