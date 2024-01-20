@@ -34,9 +34,9 @@ $(() => {
 
   $("#remote-playerlist").attr("hidden", false);
 
-     myDiv.classList.toggle("visible");
-     tabBtnDiv.classList.toggle("visible");
-     tabBtnDiv.style.left = "0px";
+    myDiv.classList.toggle("visible");
+    tabBtnDiv.classList.toggle("visible");
+    tabBtnDiv.style.left = "0px";
 
   //   const playerWrapper = $(`
   //   <div id="player-wrapper-${uid}">
@@ -106,7 +106,7 @@ $("#chat").click(async function (e) {
   } else {
     tabBtnDiv.style.left = "0px";
   }
-  myUnityInstance.SendMessage("UIManager", "ShowCollapsibleButtons");
+  myUnityInstance.SendMessage("UIManager", "OnClickOpenChatWeb");
 });
 
 async function handleJoinChannel(appid, channel, playerName) {
