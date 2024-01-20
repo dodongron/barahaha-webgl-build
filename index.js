@@ -5,7 +5,7 @@ var tabBtnDiv = document.getElementById("btn-tab");
 
 var localTracks = {
   videoTrack: null,
-  audioTrack: null
+  audioTrack: null,
 };
 var remoteUsers = {};
 // Agora client options
@@ -32,11 +32,20 @@ $(() => {
     $("#join-form").submit();
   }
 
-  myDiv.classList.toggle("visible");
-  tabBtnDiv.classList.toggle("visible");
-  tabBtnDiv.style.left = "0px";
+  $("#remote-playerlist").attr("hidden", false);
 
-})
+  //   myDiv.classList.toggle("visible");
+  //   tabBtnDiv.classList.toggle("visible");
+  //   tabBtnDiv.style.left = "0px";
+
+  //   const playerWrapper = $(`
+  //   <div id="player-wrapper-${uid}">
+  //     <p class="player-name">RemoteUser(${uid})</p>
+  //     <div id="player-${uid}" class="player"></div>
+  //   </div>
+  // `);
+  //   $("#remote-playerlist").append(playerWrapper);
+});
 
 $("#join").click(async function (e) {
   e.preventDefault();
@@ -49,14 +58,17 @@ $("#join").click(async function (e) {
       options.token = $("#token").val();
       options.channel = $("#channel").val();
       options.playerName = $("#playerName").val();
-  
+
       await join();
-      if(options.token) {
+      if (options.token) {
         $("#success-alert-with-token").css("display", "block");
       } else {
-        $("#success-alert a").attr("href", `index.html?appid=${options.appid}&channel=${options.channel}&token=${options.token}`);
+        $("#success-alert a").attr(
+          "href",
+          `index.html?appid=${options.appid}&channel=${options.channel}&token=${options.token}`
+        );
         $("#success-alert").css("display", "block");
-  
+
         var leaveButton = document.getElementById("leave");
         leaveButton.hidden = false;
       }
@@ -66,8 +78,7 @@ $("#join").click(async function (e) {
       // $("#join").attr("hidden", true);
     }
   }
-
-})
+});
 
 $("#toggleButton").click(async function (e) {
   e.preventDefault();
@@ -77,11 +88,11 @@ $("#toggleButton").click(async function (e) {
   tabBtnDiv.classList.toggle("visible");
   if (!tabBtnDiv.classList.contains("visible")) {
     tabBtnDiv.style.left = "-87px";
-  }else{
+  } else {
     tabBtnDiv.style.left = "0px";
   }
-  myUnityInstance.SendMessage('UIManager', 'ShowCollapsibleButtons');
-})
+  myUnityInstance.SendMessage("UIManager", "ShowCollapsibleButtons");
+});
 
 $("#chat").click(async function (e) {
   e.preventDefault();
@@ -92,11 +103,11 @@ $("#chat").click(async function (e) {
   tabBtnDiv.classList.toggle("visible");
   if (!tabBtnDiv.classList.contains("visible")) {
     tabBtnDiv.style.left = "-87px";
-  }else{
+  } else {
     tabBtnDiv.style.left = "0px";
   }
-  myUnityInstance.SendMessage('UIManager', 'OnClickOpenChatWeb');
-})
+  myUnityInstance.SendMessage("UIManager", "ShowCollapsibleButtons");
+});
 
 async function handleJoinChannel(appid, channel, playerName) {
   showCollapsible();
@@ -110,13 +121,13 @@ async function handleJoinChannel(appid, channel, playerName) {
   await join();
 }
 
-function showCollapsible(){
+function showCollapsible() {
   myDiv.classList.toggle("visible");
   tabBtnDiv.classList.toggle("visible");
   tabBtnDiv.style.left = "-87px";
 }
 
-function hideCollapsible(){
+function hideCollapsible() {
   myDiv.classList.toggle("visible");
   tabBtnDiv.classList.toggle("visible");
   tabBtnDiv.style.left = "0px";
@@ -128,11 +139,17 @@ async function join() {
   client.on("user-unpublished", handleUserUnpublished);
 
   // join a channel and create local tracks, we can use Promise.all to run them concurrently
-  [ options.uid, localTracks.audioTrack, localTracks.videoTrack ] = await Promise.all([
-    client.join(options.appid, "Channel1", options.token || null, options.playerName),
-    AgoraRTC.createMicrophoneAudioTrack(),
-    AgoraRTC.createCameraVideoTrack()
-  ]);
+  [options.uid, localTracks.audioTrack, localTracks.videoTrack] =
+    await Promise.all([
+      client.join(
+        options.appid,
+        "Channel1",
+        options.token || null,
+        options.playerName
+      ),
+      AgoraRTC.createMicrophoneAudioTrack(),
+      AgoraRTC.createCameraVideoTrack(),
+    ]);
   localTracks.videoTrack.play("local-player");
   // $("#local-player-name").text(`localVideo(${options.uid})`);
   $("#local-player-name").text(`${options.uid}`);
@@ -146,11 +163,11 @@ async function join() {
 async function leave() {
   $("#leave").attr("hidden", true);
   $("#leave").attr("disabled", true);
-  myUnityInstance.SendMessage('UIManager', 'ShowCollapsibleButtons');
+  myUnityInstance.SendMessage("UIManager", "ShowCollapsibleButtons");
 
   for (trackName in localTracks) {
     var track = localTracks[trackName];
-    if(track) {
+    if (track) {
       track.stop();
       track.close();
       localTracks[trackName] = undefined;
@@ -172,24 +189,30 @@ async function leave() {
 
 async function subscribe(user, mediaType) {
   console.log("***********************************");
-  console.log("User: "+JSON.stringify(user));
+  console.log("User: " + JSON.stringify(user));
   console.log("***********************************");
   const uid = user.uid;
   // subscribe to a remote user
   await client.subscribe(user, mediaType);
-  
+
   console.log("subscribe success");
-  if (mediaType === 'video') {
-    const playerWrapper  = $(`
-      <div id="player-wrapper-${uid}">
+
+  console.log(mediaType);
+  if (mediaType === "video") {
+    const playerWrapper = $(`
+      <div id="player-wrapper-${uid}" style="  position: relative;" >
+      <div class="tophead-container">
         <p class="player-name">RemoteUser(${uid})</p>
-        <div id="player-${uid}" class="player"></div>
+        <span><p>settings<p/></span>
+      </div>
+        <div id="player-${uid}" class="remote"></div>
       </div>
     `);
     $("#remote-playerlist").append(playerWrapper);
+
     user.videoTrack.play(`player-${uid}`);
   }
-  if (mediaType === 'audio') {
+  if (mediaType === "audio") {
     user.audioTrack.play();
   }
 }
