@@ -1,5 +1,7 @@
 // create Agora client
 var client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+var myDiv = document.getElementById("myDiv");
+var tabBtnDiv = document.getElementById("btn-tab");
 
 var localTracks = {
   videoTrack: null,
@@ -29,45 +31,78 @@ $(() => {
     $("#playerName").val(options.playerName);
     $("#join-form").submit();
   }
+
+  myDiv.classList.toggle("visible");
+  tabBtnDiv.classList.toggle("visible");
+  tabBtnDiv.style.left = "0px";
+
 })
 
-$("#join-form").submit(async function (e) {
+$("#join").click(async function (e) {
   e.preventDefault();
-  $("#join").attr("disabled", true);
+  if ($("#local-player").is(":hidden")) {
+    $("#join").attr("disabled", true);
+
+    $("#local-player").attr("hidden", false);
+    try {
+      options.appid = $("#appid").val();
+      options.token = $("#token").val();
+      options.channel = $("#channel").val();
+      options.playerName = $("#playerName").val();
   
-  try {
-    options.appid = $("#appid").val();
-    options.token = $("#token").val();
-    options.channel = $("#channel").val();
-    options.playerName = $("#playerName").val();
-
-    await join();
-    if(options.token) {
-      $("#success-alert-with-token").css("display", "block");
-    } else {
-      $("#success-alert a").attr("href", `index.html?appid=${options.appid}&channel=${options.channel}&token=${options.token}`);
-      $("#success-alert").css("display", "block");
-
-      var leaveButton = document.getElementById("leave");
-      leaveButton.hidden = false;
+      await join();
+      if(options.token) {
+        $("#success-alert-with-token").css("display", "block");
+      } else {
+        $("#success-alert a").attr("href", `index.html?appid=${options.appid}&channel=${options.channel}&token=${options.token}`);
+        $("#success-alert").css("display", "block");
+  
+        var leaveButton = document.getElementById("leave");
+        leaveButton.hidden = false;
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // $("#join").attr("hidden", true);
     }
-  } catch (error) {
-    console.error(error);
-  } finally {
-
-    // $("#join").attr("hidden", true);
   }
-});
 
-$("#leave").click(function (e) {
+})
+
+$("#toggleButton").click(async function (e) {
   e.preventDefault();
-  leave();
+  await leave();
+
+  myDiv.classList.toggle("visible");
+  tabBtnDiv.classList.toggle("visible");
+  if (!tabBtnDiv.classList.contains("visible")) {
+    tabBtnDiv.style.left = "-87px";
+  }else{
+    tabBtnDiv.style.left = "0px";
+  }
+  myUnityInstance.SendMessage('UIManager', 'ShowCollapsibleButtons');
+})
+
+$("#chat").click(async function (e) {
+  e.preventDefault();
+  await leave();
+
+  $("#local-player").attr("hidden", true);
+  myDiv.classList.toggle("visible");
+  tabBtnDiv.classList.toggle("visible");
+  if (!tabBtnDiv.classList.contains("visible")) {
+    tabBtnDiv.style.left = "-87px";
+  }else{
+    tabBtnDiv.style.left = "0px";
+  }
+  myUnityInstance.SendMessage('UIManager', 'OnClickOpenChatWeb');
 })
 
 async function handleJoinChannel(appid, channel, playerName) {
-  // console.log("Joining Channel with the following parameters:");
-  // console.log("App ID:", appid);
-  // console.log("Channel:", channel);
+  showCollapsible();
+
+  $("#leave").attr("hidden", false);
+  $("#leave").attr("disabled", false);
 
   options.appid = appid;
   options.channel = channel;
@@ -75,16 +110,22 @@ async function handleJoinChannel(appid, channel, playerName) {
   await join();
 }
 
+function showCollapsible(){
+  myDiv.classList.toggle("visible");
+  tabBtnDiv.classList.toggle("visible");
+  tabBtnDiv.style.left = "-87px";
+}
+
+function hideCollapsible(){
+  myDiv.classList.toggle("visible");
+  tabBtnDiv.classList.toggle("visible");
+  tabBtnDiv.style.left = "0px";
+}
 
 async function join() {
   // add event listener to play remote tracks when remote user publishs.
   client.on("user-published", handleUserPublished);
   client.on("user-unpublished", handleUserUnpublished);
-
-  var currentDate = new Date();
-  var formattedDate = currentDate.toISOString().slice(0, 19).replace("T", " "); // Format: "YYYY-MM-DD HH:mm:ss"
-
-  options.playerName = options.playerName + formattedDate;
 
   // join a channel and create local tracks, we can use Promise.all to run them concurrently
   [ options.uid, localTracks.audioTrack, localTracks.videoTrack ] = await Promise.all([
@@ -92,10 +133,6 @@ async function join() {
     AgoraRTC.createMicrophoneAudioTrack(),
     AgoraRTC.createCameraVideoTrack()
   ]);
-  // console.log("************************************");
-  // console.log("options.uid: "+options.uid);
-  // console.log("************************************");
-  // play local video track
   localTracks.videoTrack.play("local-player");
   // $("#local-player-name").text(`localVideo(${options.uid})`);
   $("#local-player-name").text(`${options.uid}`);
@@ -103,17 +140,14 @@ async function join() {
   // publish local tracks to channel
   await client.publish(Object.values(localTracks));
 
-  $("#leave").attr("hidden", false);
-  $("#leave").attr("disabled", false);
-  // $("#join").attr("hidden", true);
-
-  console.log("********************************");
-  console.log("New User: "+options.uid);
-  console.log("********************************");
-  
+  $("#local-player").attr("hidden", false);
 }
 
 async function leave() {
+  $("#leave").attr("hidden", true);
+  $("#leave").attr("disabled", true);
+  myUnityInstance.SendMessage('UIManager', 'ShowCollapsibleButtons');
+
   for (trackName in localTracks) {
     var track = localTracks[trackName];
     if(track) {
@@ -122,7 +156,6 @@ async function leave() {
       localTracks[trackName] = undefined;
     }
   }
-
   // remove remote users and player views
   remoteUsers = {};
   $("#remote-playerlist").html("");
@@ -131,12 +164,9 @@ async function leave() {
   await client.leave();
 
   $("#local-player-name").text("");
-
-  $("#leave").attr("hidden", true);
-  $("#leave").attr("disabled", true);
+  $("#local-player").attr("hidden", true);
   // $("#join").attr("hidden", false);
   $("#join").attr("disabled", false);
-
   console.log("client leaves channel success");
 }
 
@@ -172,9 +202,8 @@ function handleUserPublished(user, mediaType) {
 
 function handleUserUnpublished(user) {
   const id = user.uid;
-  console.log("***********************************");
-  console.log("User ID: "+id);
-  console.log("***********************************");
   delete remoteUsers[id];
+  $(`#player-wrapper-${id}`).detach();
   $(`#player-wrapper-${id}`).remove();
+  $(`#player-wrapper-${id}`).empty();
 }

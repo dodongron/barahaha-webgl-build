@@ -3,9 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Unity WebGL Player | Barahaha</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
+    <script src="./jquery-3.4.1.min.js"></script>
+    <script src="./bootstrap.bundle.min.js"></script>
+    <script src="./AgoraRTC_N.js"></script>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
@@ -23,6 +27,51 @@
         <div id="unity-build-title">Barahaha</div>
       </div>
     </div>
+    <form id="join-form">
+        <div id="myDiv" class="hidden">
+        <div id="btn-tab" class="hidden">
+            <button id="toggleButton" type="submit" class="tab-btn"><img src="TemplateData/icon_expand.png" width="100px" height="100px"></button>
+            <button id="chat" type="submit" class="tab-btn"><img src="TemplateData/icon_chat.png" width="100px" height="100px"></button>
+            <button id="join" type="submit" class="tab-btn"><img src="TemplateData/icon_video_chat.png" width="100px" height="100px"></button>
+        </div>
+        <!-- <p id="local-player-name" class="player-name"></p> -->
+        <div id="local-player" class="player" hidden></div>
+        <div class="row join-info-group" >
+        <div class="col-sm sso-hidden">
+            <p class="join-info-text" hidden>APP ID</p>
+            <input id="appid" type="text" value="6939706dbaee409bb0c5e8b0698fc483" hidden>
+        </div>
+        <div class="col-sm">
+            <p class="join-info-text" hidden>Room</p>
+            <input id="roomName" type="text" hidden>
+        </div>
+        <div class="col-sm">
+            <p class="join-info-text" hidden>Channel Name</p>
+            <input id="channel" type="text" value="Channel1" hidden>
+        </div>
+        <div class="col-sm">
+            <p class="join-info-text" hidden>Player</p>
+            <input id="playerName" type="text" hidden value="Player Name">
+        </div>
+        </div>
+        <br/>
+        </div>
+    </form>
+    <!-- <div id="video-container" >
+      <div class="row video-group">
+          <div class="col">
+
+            <div class="buttons-container">
+
+            </div>
+          </div>
+          <div class="w-100"></div>
+          <div class="col">
+              <div id="remote-playerlist"></div>
+          </div>
+      </div>
+    </div> -->
+
     <script>
 
       var container = document.querySelector("#unity-container");
@@ -31,7 +80,7 @@
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var fullscreenButton = document.querySelector("#unity-fullscreen-button");
       var warningBanner = document.querySelector("#unity-warning");
-
+      var myUnityInstance = null;
       // Shows a temporary message banner/ribbon for a few seconds, or
       // a permanent error message on top of the canvas if type=='error'.
       // If type=='warning', a yellow highlight color is used.
@@ -57,11 +106,11 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/InBetweenTest.loader.js";
+      var loaderUrl = buildUrl + "/Build.loader.js";
       var config = {
-        dataUrl: buildUrl + "/InBetweenTest.data",
-        frameworkUrl: buildUrl + "/InBetweenTest.framework.js",
-        codeUrl: buildUrl + "/InBetweenTest.wasm",
+        dataUrl: buildUrl + "/Build.data",
+        frameworkUrl: buildUrl + "/Build.framework.js",
+        codeUrl: buildUrl + "/Build.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Crazy Munchies Studio",
         productName: "Barahaha",
@@ -106,10 +155,27 @@
         createUnityInstance(canvas, config, (progress) => {
           progressBarFull.style.width = 100 * progress + "%";
               }).then((unityInstance) => {
+                myUnityInstance = unityInstance;
                 loadingBar.style.display = "none";
                 fullscreenButton.onclick = () => {
                   unityInstance.SetFullscreen(1);
                 };
+                const urlParams = new URLSearchParams(window.location.search);
+                const t = urlParams.get('t');
+                if(t != null){
+                  localStorage.setItem("token",t);
+                  myUnityInstance.SendMessage('Agora_PlayerHandler', 'ReceiveToken',t);
+                  var currentUrl = window.location.href;
+                  var updatedUrl = currentUrl.replace(/\/[^/]*$/, '');
+                  history.replaceState(null, '', updatedUrl);
+                }else{
+                  if(localStorage.getItem("token") != null){
+                    myUnityInstance.SendMessage('Agora_PlayerHandler', 'ReceiveToken',localStorage.getItem("token"));
+                    var currentUrl = window.location.href;
+                    var updatedUrl = currentUrl.replace(/\/[^/]*$/, '');
+                    history.replaceState(null, '', updatedUrl);                  
+                  }
+                }
               }).catch((message) => {
                 alert(message);
               });
@@ -118,5 +184,6 @@
       document.body.appendChild(script);
 
     </script>
+    <script src="./index.js"></script> 
   </body>
 </html>
